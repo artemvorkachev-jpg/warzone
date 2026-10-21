@@ -12,7 +12,7 @@ h1{font-size:18px;margin:0;letter-spacing:.08em}small{color:#a8c1c5}
 #stats{display:flex;gap:14px;flex-wrap:wrap}.stat b{color:var(--accent);font-variant-numeric:tabular-nums}
 main{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:12px;padding:12px;max-width:1400px;margin:auto}
 #stage{min-width:0;position:relative;border:1px solid var(--line);background:#18242a;border-radius:8px;overflow:hidden}
-canvas{display:block;width:100%;height:auto;aspect-ratio:16/10;image-rendering:pixelated;cursor:crosshair}
+canvas{display:block;width:100%;height:auto;aspect-ratio:16/10;image-rendering:pixelated;cursor:crosshair;outline:none}canvas:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
 aside{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:10px}
 h2{font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0}
 button{background:#243b42;color:var(--text);border:1px solid #55757c;border-radius:5px;padding:9px;text-align:left;cursor:pointer;font:inherit}
@@ -34,7 +34,7 @@ kbd{background:#0d171b;border:1px solid #50666c;border-radius:3px;padding:1px 4p
   </div>
 </header>
 <main>
-  <section id="stage"><canvas id="game" width="960" height="600" aria-label="Игровая карта"></canvas></section>
+  <section id="stage"><canvas id="game" width="960" height="600" tabindex="0" aria-label="Игровая карта. Щёлкни по карте, затем используй WASD для прокрутки."></canvas></section>
   <aside>
     <div class="wide"><h2>Командный пункт</h2><p class="help">Исследуй пустошь, собирай металл и расширяй базу. Выбирай машину щелчком, затем щёлкай по карте, чтобы дать ей приказ переместиться.</p></div>
     <div><h2>Строительство</h2><div class="actions">
@@ -48,7 +48,7 @@ kbd{background:#0d171b;border:1px solid #50666c;border-radius:3px;padding:1px 4p
       <button id="center">⌖ К базе</button>
     </div></div>
     <div class="wide"><h2>События</h2><div id="message" role="status">Командный пункт активен. Выбери разведмашину на карте.</div></div>
-    <div class="wide"><h2>Управление</h2><p class="help"><kbd>Щелчок</kbd> выбрать объект / задать цель<br><kbd>W A S D</kbd> прокрутить карту<br>Строительство размещается возле базы. Объекты и ресурсы можно выбирать мышью.</p></div>
+    <div class="wide"><h2>Управление</h2><p class="help"><kbd>Щелчок</kbd> выбрать объект / задать цель<br><kbd>W A S D</kbd> (любая раскладка) прокрутить карту<br>Строительство размещается возле базы. Объекты и ресурсы можно выбирать мышью.</p></div>
   </aside>
 </main>
 <script>
@@ -137,7 +137,16 @@ canvas.addEventListener('click',e=>{
  if(selected&&units.includes(selected)){selected.tx=p.x;selected.ty=p.y;selected.task=null;say(selected.label+' получил приказ переместиться.')}
  else selected=null;
 });
-const keys={};addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(['w','a','s','d',' '].includes(e.key.toLowerCase()))e.preventDefault()});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+const keys={};
+const keyMap={KeyW:'w',KeyA:'a',KeyS:'s',KeyD:'d',ArrowUp:'w',ArrowLeft:'a',ArrowDown:'s',ArrowRight:'d'};
+canvas.addEventListener('pointerdown',()=>canvas.focus({preventScroll:true}));
+window.addEventListener('keydown',e=>{
+ const k=keyMap[e.code];
+ if(k){keys[k]=true;e.preventDefault()}
+});
+window.addEventListener('keyup',e=>{const k=keyMap[e.code];if(k)keys[k]=false});
+window.addEventListener('blur',()=>{for(const k of Object.keys(keys))keys[k]=false});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){for(const k of Object.keys(keys))keys[k]=false}});
 let last=performance.now();function loop(now){let dt=Math.min(.04,(now-last)/1000);last=now;tick+=dt;
  if(keys.a)cam.x-=260*dt;if(keys.d)cam.x+=260*dt;if(keys.w)cam.y-=260*dt;if(keys.s)cam.y+=260*dt;cam.x=Math.max(0,Math.min(W-960,cam.x));cam.y=Math.max(0,Math.min(H-600,cam.y));
  for(const u of units){
