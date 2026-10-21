@@ -251,6 +251,42 @@ jobs:
               if "</body>" not in html:
                   raise SystemExit("Cannot patch Web Edition: </body> not found")
               html = html.replace("</body>", touch_script + "\\n</body>", 1)
+          # Persist game-generated savegames/config while the tab is still active.
+          # The official Web Edition exposes IDBFS syncing, but JS cannot serialize
+          # the live simulation itself; the engine must first write a savegame.
+          persistence_script = """
+          <script id="warzone-periodic-persistence">
+          (() => {
+            let lastSync = 0;
+            let syncInProgress = false;
+            const sync = (force = false) => {
+              const module = (typeof LaunchedModule !== "undefined" && LaunchedModule) ||
+                             (typeof Module !== "undefined" && Module);
+              if (!module || typeof module.wzSaveConfigDirToPersistentStore !== "function") return;
+              const now = Date.now();
+              if (syncInProgress || (!force && now - lastSync < 4000)) return;
+              syncInProgress = true;
+              lastSync = now;
+              try {
+                module.wzSaveConfigDirToPersistentStore(() => { syncInProgress = false; });
+              } catch (error) {
+                syncInProgress = false;
+                console.warn("Warzone persistent save sync failed", error);
+              }
+            };
+            window.setInterval(() => sync(false), 5000);
+            document.addEventListener("visibilitychange", () => {
+              if (document.visibilityState === "hidden") sync(true);
+            });
+            window.addEventListener("pagehide", () => sync(true));
+            window.addEventListener("beforeunload", () => sync(true));
+          })();
+          </script>
+          """
+          if 'id="warzone-periodic-persistence"' not in html:
+              if "</body>" not in html:
+                  raise SystemExit("Cannot add persistent-save hook: </body> not found")
+              html = html.replace("</body>", persistence_script + "\\n</body>", 1)
           p.write_text(html, encoding="utf-8")
           check = p.read_text(encoding="utf-8")
           if 'id="mobile-landscape-support"' not in check or ".small-screen-blocker" not in check:
