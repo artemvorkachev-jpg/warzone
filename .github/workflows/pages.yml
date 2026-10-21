@@ -113,6 +113,18 @@ jobs:
               canvas.style.touchAction = "none";
               let touch = null, pendingTap = null, lastTap = null;
               const DOUBLE_MS = 330, MOVE_LIMIT = 10, HOLD_MS = 320;
+              // Safari may synthesize trusted mouse events after a long touch.
+              // Block those native compatibility events; this script emits its own
+              // deliberate MouseEvents for taps and second-tap drag selection.
+              let lastTouchAt = 0;
+              for (const type of ["mousedown", "mouseup", "mousemove", "click", "dblclick"]) {
+                document.addEventListener(type, event => {
+                  if (event.isTrusted && Date.now() - lastTouchAt < 1200) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                  }
+                }, true);
+              }
               const sendKey = (type, key) => {
                 if (!key) return;
                 const target = document.activeElement || canvas;
@@ -171,6 +183,7 @@ jobs:
                   return;
                 }
                 const t = event.touches[0], now = Date.now();
+                lastTouchAt = now;
                 const isDouble = !!(lastTap && now - lastTap.time <= DOUBLE_MS &&
                   Math.hypot(t.clientX - lastTap.x, t.clientY - lastTap.y) <= 36);
                 canvas.focus({ preventScroll: true });
