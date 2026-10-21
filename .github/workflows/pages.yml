@@ -80,7 +80,7 @@ jobs:
           if 'id="mobile-landscape-support"' not in html:
               if "</head>" not in html:
                   raise SystemExit("Cannot patch Web Edition: </head> not found")
-              html = html.replace("</head>", mobile_css + "\\n</head>", 1)
+              html = html.replace("</head>", mobile_css + "\n</head>", 1)
               p.write_text(html, encoding="utf-8")
           if 'id="mobile-landscape-support"' not in p.read_text(encoding="utf-8"):
               raise SystemExit("Mobile landscape patch verification failed")
