@@ -55,37 +55,55 @@ jobs:
               max-width: 100% !important;
               margin: 0 !important;
             }
+            /* Mobile: use the whole landscape viewport and keep touch input in the game. */
+            html, body {
+              margin: 0 !important;
+              padding: 0 !important;
+              max-width: 100% !important;
+            }
             .small-screen-blocker { display: none !important; }
-            /* Let taps reach the game canvas; avoid Safari's double-tap zoom. */
-            canvas.emscripten, #emscripten_container {
+            canvas, #canvas, canvas.emscripten, #emscripten_container,
+            #canvas-container, #game-container, .emscripten_container {
               touch-action: none !important;
               -webkit-tap-highlight-color: transparent;
               -webkit-user-select: none;
               user-select: none;
             }
-            canvas.emscripten {
-              cursor: default;
-            }
-            @media (orientation: landscape) {
+            @media (orientation: landscape) and (max-width: 1200px) {
               html, body {
-                width: 100vw !important;
-                height: 100vh !important;
+                width: 100% !important;
+                height: 100% !important;
                 min-width: 0 !important;
                 min-height: 0 !important;
                 overflow: hidden !important;
+                background: #000 !important;
               }
-              #emscripten_container {
+              body > * {
+                max-width: none !important;
+              }
+              #emscripten_container, #canvas-container, #game-container,
+              .emscripten_container, main, #main-container {
                 position: fixed !important;
                 inset: 0 !important;
                 width: 100vw !important;
                 height: 100vh !important;
+                max-width: none !important;
+                max-height: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
                 overflow: hidden !important;
               }
-              canvas.emscripten {
+              canvas, #canvas, canvas.emscripten {
+                position: fixed !important;
+                inset: 0 !important;
+                display: block !important;
                 width: 100vw !important;
                 height: 100vh !important;
-                max-width: 100vw !important;
-                max-height: 100vh !important;
+                max-width: none !important;
+                max-height: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                object-fit: fill !important;
               }
             }
           </style>
