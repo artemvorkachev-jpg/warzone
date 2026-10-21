@@ -112,7 +112,7 @@ jobs:
               canvas.dataset.touchPanInstalled = "1";
               canvas.style.touchAction = "none";
               let touch = null, pendingTap = null, lastTap = null;
-              const DOUBLE_MS = 330, MOVE_LIMIT = 10;
+              const DOUBLE_MS = 200, MOVE_LIMIT = 10;
               // Safari may synthesize trusted mouse events after a long touch.
               // Block those native compatibility events; this script emits its own
               // deliberate MouseEvents for taps and second-tap drag selection.
@@ -165,6 +165,13 @@ jobs:
                     clickAt(point.x, point.y);
                     pendingTap = null;
                   }, DOUBLE_MS) };
+                } else if (touch.mode === "doubleCandidate" && !touch.moved) {
+                  // A stationary double-tap becomes a real double-click for the game
+                  // (e.g. inspect a unit); it never becomes a map-move command.
+                  const point = { x: touch.startX, y: touch.startY };
+                  clickAt(point.x, point.y);
+                  clickAt(point.x, point.y);
+                  sendMouse("dblclick", point.x, point.y);
                 }
                 if (touch.holdTimer) clearTimeout(touch.holdTimer);
                 touch = null;
@@ -185,7 +192,7 @@ jobs:
                 canvas.focus({ preventScroll: true });
                 touch = {
                   startX: t.clientX, startY: t.clientY, x: t.clientX, y: t.clientY,
-                  mode: isDouble ? "pan" : "pending", moved: false, key: null, holdTimer: null
+                  mode: isDouble ? "doubleCandidate" : "pending", moved: false, key: null, holdTimer: null
                 };
                 if (isDouble) {
                   lastTap = null;
@@ -203,7 +210,9 @@ jobs:
                 if (Math.hypot(t.clientX - touch.startX, t.clientY - touch.startY) > MOVE_LIMIT) {
                   touch.moved = true;
                   if (touch.holdTimer) { clearTimeout(touch.holdTimer); touch.holdTimer = null; }
-
+                  // The second tap only pans if the finger is dragged; a stationary
+                  // double-tap is reserved for inspecting a unit.
+                  if (touch.mode === "doubleCandidate") touch.mode = "pan";
                 }
                 if (touch.mode === "pan" && touch.moved) {
                   const nextKey = keyFor(dx, dy);
