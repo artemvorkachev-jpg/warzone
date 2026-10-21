@@ -1,4 +1,4 @@
-name: Deploy site to GitHub Pages
+name: Build and deploy Warzone 2100 Web Edition
 
 on:
   push:
@@ -21,16 +21,44 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout site shell
         uses: actions/checkout@v4
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
+
+      - name: Download official Warzone 2100 Web Edition
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 \
+            "https://github.com/Warzone2100/warzone2100/releases/download/4.7.0/warzone2100_web_wasm32_archive.zip" \
+            --output /tmp/warzone-web.zip
+          mkdir -p /tmp/warzone-web site/game
+          unzip -q /tmp/warzone-web.zip -d /tmp/warzone-web
+          game_index="$(find /tmp/warzone-web -type f -name index.html -print -quit)"
+          if [ -z "$game_index" ]; then
+            echo "Could not find index.html in the official Web Edition archive"
+            exit 1
+          fi
+          game_root="$(dirname "$game_index")"
+          cp -a "$game_root"/. site/game/
+          test -s site/game/index.html
+
+      - name: Assemble site
+        run: |
+          set -euo pipefail
+          mkdir -p site
+          cp index.html site/index.html
+          if [ -d assets ]; then cp -a assets site/; fi
+          touch site/.nojekyll
+
       - name: Upload site files
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: site
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
