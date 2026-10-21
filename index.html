@@ -3,161 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Warzone 2100 — Frontier Outpost</title>
+<meta http-equiv="refresh" content="2;url=https://play.wz2100.net/">
+<title>Warzone 2100 — запуск настоящей игры</title>
 <style>
-:root{color-scheme:dark;--bg:#101820;--panel:#1b2a31;--line:#45616a;--accent:#86e3c0;--text:#e6f2ef}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px system-ui,Segoe UI,sans-serif}
-header{padding:12px 16px;background:#17242a;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-h1{font-size:18px;margin:0;letter-spacing:.08em}small{color:#a8c1c5}
-#stats{display:flex;gap:14px;flex-wrap:wrap}.stat b{color:var(--accent);font-variant-numeric:tabular-nums}
-main{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:12px;padding:12px;max-width:1400px;margin:auto}
-#stage{min-width:0;position:relative;border:1px solid var(--line);background:#18242a;border-radius:8px;overflow:hidden}
-canvas{display:block;width:100%;height:auto;aspect-ratio:16/10;image-rendering:pixelated;cursor:crosshair;outline:none}canvas:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
-aside{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:10px}
-h2{font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0}
-button{background:#243b42;color:var(--text);border:1px solid #55757c;border-radius:5px;padding:9px;text-align:left;cursor:pointer;font:inherit}
-button:hover{background:#31515a}button:disabled{opacity:.4;cursor:not-allowed}
-.actions{display:grid;gap:7px}.help{color:#b5c9cb;line-height:1.5;font-size:12px}
-#message{min-height:36px;border-left:3px solid var(--accent);padding:7px 9px;background:#142126;color:#d6e8e5;line-height:1.4}
-kbd{background:#0d171b;border:1px solid #50666c;border-radius:3px;padding:1px 4px}
-@media(max-width:850px){main{grid-template-columns:1fr}aside{display:grid;grid-template-columns:1fr 1fr}aside .wide{grid-column:1/-1}}
-@media(max-width:500px){aside{display:flex}header{align-items:flex-start}#stats{gap:8px}}
+:root{color-scheme:dark;background:#111820;color:#e8eee8;font:16px system-ui,sans-serif}
+body{min-height:100vh;margin:0;display:grid;place-items:center;padding:24px;box-sizing:border-box}
+main{max-width:620px;padding:28px;border:1px solid #52685f;border-radius:12px;background:#1a2927}
+h1{margin-top:0;font-size:clamp(24px,5vw,36px)}
+p{line-height:1.6;color:#c9d8d1}
+a{display:inline-block;margin-top:10px;padding:12px 18px;background:#b9e5b7;color:#142019;text-decoration:none;font-weight:700;border-radius:7px}
+small{display:block;margin-top:16px;color:#9fb2aa}
 </style>
 </head>
 <body>
-<header>
-  <div><h1>FRONTIER OUTPOST <small> / стратегия 2100</small></h1><small>Постапокалиптический мир · прототип</small></div>
-  <div id="stats">
-    <span class="stat">Металл <b id="metal">180</b></span>
-    <span class="stat">Энергия <b id="energy">120</b></span>
-    <span class="stat">Техника <b id="units">2</b></span>
-  </div>
-</header>
 <main>
-  <section id="stage"><canvas id="game" width="960" height="600" tabindex="0" aria-label="Игровая карта. Щёлкни по карте, затем используй WASD для прокрутки."></canvas></section>
-  <aside>
-    <div class="wide"><h2>Командный пункт</h2><p class="help">Исследуй пустошь, собирай металл и расширяй базу. Выбирай машину щелчком, затем щёлкай по карте, чтобы дать ей приказ переместиться.</p></div>
-    <div><h2>Строительство</h2><div class="actions">
-      <button id="buildFactory">▦ Завод техники — 70 металл</button>
-      <button id="buildSolar">☼ Солнечная станция — 45 металл</button>
-      <button id="buildStore">▤ Склад ресурсов — 35 металл</button>
-    </div></div>
-    <div><h2>Подразделения</h2><div class="actions">
-      <button id="makeScout">＋ Разведмашина — 35 металл</button>
-      <button id="gather">⛏ Собрать ближайший металл</button>
-      <button id="center">⌖ К базе</button>
-    </div></div>
-    <div class="wide"><h2>События</h2><div id="message" role="status">Командный пункт активен. Выбери разведмашину на карте.</div></div>
-    <div class="wide"><h2>Управление</h2><p class="help"><kbd>Щелчок</kbd> выбрать объект / задать цель<br><kbd>W A S D</kbd> (любая раскладка) прокрутить карту<br>Строительство размещается возле базы. Объекты и ресурсы можно выбирать мышью.</p></div>
-  </aside>
+<h1>Warzone 2100</h1>
+<p>Это настоящая Warzone 2100 — оригинальная открытая игра, а не самодельная копия. Сейчас откроется официальная браузерная версия.</p>
+<a href="https://play.wz2100.net/">Запустить Warzone 2100</a>
+<small>Если автоматический переход не сработал, нажми кнопку выше. Для браузерной версии нужен современный браузер с WebAssembly и WebGL 2; лучше играть с компьютера и клавиатуры.</small>
 </main>
-<script>
-(()=>{
-const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
-const ui={metal:document.querySelector('#metal'),energy:document.querySelector('#energy'),units:document.querySelector('#units'),message:document.querySelector('#message')};
-const W=1800,H=1200,T=40;let metal=180,energy=120,selected=null,cam={x:0,y:0},tick=0,placing=null;
-const buildings=[{type:'hq',x:340,y:330,w:76,h:62,label:'КП'}];
-const units=[{type:'scout',x:445,y:350,tx:445,ty:350,label:'Разведчик 01'},{type:'hauler',x:460,y:410,tx:460,ty:410,label:'Сборщик 01'}];
-const nodes=[];for(let i=0;i<24;i++){let x=100+((i*197+53)%1550),y=80+((i*131+117)%1020);if(Math.hypot(x-370,y-360)>200)nodes.push({x,y,amount:25+(i*17)%65})}
-const obstacles=[];for(let i=0;i<85;i++){let x=(i*173+89)%W,y=(i*109+47)%H;if(Math.hypot(x-370,y-360)>150)obstacles.push({x,y,r:8+(i%4)*3,type:i%3?'rock':'scrub'})}
-const rand=(a,b)=>a+Math.random()*(b-a);
-function say(s){ui.message.textContent=s}
-function sync(){ui.metal.textContent=Math.floor(metal);ui.energy.textContent=Math.floor(energy);ui.units.textContent=units.length}
-function screen(x,y){return{x:x-cam.x,y:y-cam.y}}
-function world(x,y){let r=canvas.getBoundingClientRect();return{x:(x-r.left)*canvas.width/r.width+cam.x,y:(y-r.top)*canvas.height/r.height+cam.y}}
-function draw(){
- ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#26362f';ctx.fillRect(0,0,960,600);
- ctx.save();ctx.translate(-cam.x,-cam.y);
- // terrain grid
- for(let x=Math.floor(cam.x/T)*T;x<cam.x+960;x+=T){for(let y=Math.floor(cam.y/T)*T;y<cam.y+600;y+=T){ctx.fillStyle=((x/T+y/T)%2===0)?'#2b3b32':'#29382f';ctx.fillRect(x,y,T,T);ctx.strokeStyle='#35463a';ctx.strokeRect(x,y,T,T)}}
- // paths
- ctx.strokeStyle='#59614b';ctx.lineWidth=30;ctx.beginPath();ctx.moveTo(80,385);ctx.lineTo(330,385);ctx.lineTo(530,520);ctx.lineTo(850,520);ctx.stroke();ctx.strokeStyle='#6d7057';ctx.lineWidth=2;ctx.stroke();
- for(const o of obstacles){ctx.fillStyle=o.type==='rock'?'#72766c':'#4c6949';ctx.beginPath();ctx.arc(o.x,o.y,o.r,0,Math.PI*2);ctx.fill();if(o.type==='rock'){ctx.strokeStyle='#92958b';ctx.stroke()}}
- // metal nodes
- for(const n of nodes){ctx.fillStyle='#bd9557';ctx.beginPath();ctx.moveTo(n.x,n.y-12);ctx.lineTo(n.x+11,n.y-3);ctx.lineTo(n.x+7,n.y+10);ctx.lineTo(n.x-7,n.y+10);ctx.lineTo(n.x-12,n.y);ctx.closePath();ctx.fill();ctx.fillStyle='#f0d59a';ctx.fillRect(n.x-3,n.y-4,6,3);ctx.fillStyle='#e8e0c7';ctx.font='11px system-ui';ctx.fillText('+'+n.amount,n.x-12,n.y+24)}
- for(const b of buildings)drawBuilding(b);
- for(const u of units)drawUnit(u);
- ctx.restore();
- // map frame and compass
- ctx.strokeStyle='#6c9290';ctx.lineWidth=2;ctx.strokeRect(1,1,958,598);
- ctx.fillStyle='#d2e4d8';ctx.font='12px system-ui';ctx.fillText('СЕКТОР 04  /  НЕИЗВЕДАННАЯ ЗОНА',16,22);
- if(placing){ctx.fillStyle='#a3f1c2';ctx.fillText('Режим строительства: щёлкни по свободному месту',16,canvas.height-16)}
-}
-function drawBuilding(b){
- const colors={hq:'#7db9a0',factory:'#b3a16e',solar:'#d8bc61',store:'#9caaa1'};
- ctx.fillStyle='#17221f';ctx.fillRect(b.x-b.w/2+5,b.y-b.h/2+7,b.w,b.h);
- ctx.fillStyle=colors[b.type]||'#8db3a5';ctx.fillRect(b.x-b.w/2,b.y-b.h/2,b.w,b.h);
- ctx.fillStyle='#263b38';ctx.fillRect(b.x-b.w/2+8,b.y-b.h/2+8,b.w-16,b.h-16);
- ctx.strokeStyle='#c0d9c4';ctx.strokeRect(b.x-b.w/2,b.y-b.h/2,b.w,b.h);
- if(b.type==='solar'){ctx.strokeStyle='#f3d97e';for(let i=-1;i<=1;i++){ctx.beginPath();ctx.moveTo(b.x+i*13,b.y-16);ctx.lineTo(b.x+i*13,b.y+16);ctx.stroke()}}
- else {ctx.fillStyle=colors[b.type]||'#8db3a5';ctx.fillRect(b.x-7,b.y-7,14,14)}
- ctx.fillStyle='#e6eee1';ctx.font='12px system-ui';ctx.textAlign='center';ctx.fillText(b.label,b.x,b.y+b.h/2+16);ctx.textAlign='left';
- if(selected===b){ctx.strokeStyle='#8af0c1';ctx.lineWidth=2;ctx.strokeRect(b.x-b.w/2-4,b.y-b.h/2-4,b.w+8,b.h+8)}
-}
-function drawUnit(u){
- ctx.save();ctx.translate(u.x,u.y);
- if(u.type==='scout'){ctx.fillStyle='#8ad5b5';ctx.beginPath();ctx.moveTo(0,-15);ctx.lineTo(12,10);ctx.lineTo(0,6);ctx.lineTo(-12,10);ctx.closePath();ctx.fill()}
- else {ctx.fillStyle='#c3bd85';ctx.fillRect(-12,-9,24,18);ctx.fillStyle='#4d6d5e';ctx.fillRect(-6,-6,12,12)}
- ctx.fillStyle='#1a2724';ctx.fillRect(-13,9,26,4);ctx.fillStyle='#9ce8bd';ctx.fillRect(-9,10,5,2);ctx.fillRect(4,10,5,2);
- if(selected===u){ctx.strokeStyle='#9cf5c4';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,20,0,Math.PI*2);ctx.stroke()}
- ctx.fillStyle='#e4eee6';ctx.font='10px system-ui';ctx.textAlign='center';ctx.fillText(u.label,0,-21);ctx.restore();ctx.textAlign='left';
-}
-function freeSpot(x,y){return !buildings.some(b=>Math.hypot(x-b.x,y-b.y)<70)&&!nodes.some(n=>Math.hypot(x-n.x,y-n.y)<30)}
-function build(type,cost,label,w=54,h=44){
- if(metal<cost){say('Недостаточно металла. Отправь сборщик к месторождению.');return}
- const base=buildings[0],x=base.x+100+(buildings.length%3)*72,y=base.y+90+Math.floor(buildings.length/3)*62;
- if(!freeSpot(x,y)){say('Рядом с базой нет свободного места.');return}
- metal-=cost;buildings.push({type,x,y,w,h,label});if(type==='solar')energy+=25;sync();say(label+' построен.');
-}
-document.querySelector('#buildFactory').onclick=()=>build('factory',70,'Завод',64,52);
-document.querySelector('#buildSolar').onclick=()=>build('solar',45,'Солнечная станция',58,42);
-document.querySelector('#buildStore').onclick=()=>build('store',35,'Склад',54,44);
-document.querySelector('#makeScout').onclick=()=>{
- if(!buildings.some(b=>b.type==='factory')){say('Сначала построй завод техники.');return}
- if(metal<35){say('Недостаточно металла.');return}
- metal-=35;units.push({type:'scout',x:buildings[0].x+rand(-45,45),y:buildings[0].y+70,tx:buildings[0].x+80,ty:buildings[0].y+80,label:'Разведчик '+String(units.length+1).padStart(2,'0')});sync();say('Разведмашина готова.');
-};
-document.querySelector('#gather').onclick=()=>{
- let u=selected&&units.includes(selected)?selected:units.find(u=>u.type==='hauler');
- if(!u){say('Выбери сборщик или разведмашину.');return}
- const n=nodes.filter(n=>n.amount>0).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y))[0];
- if(!n){say('Все доступные месторождения исчерпаны.');return}
- u.task=n;u.tx=n.x;u.ty=n.y;say('Сборщик направлен к месторождению.');
-};
-document.querySelector('#center').onclick=()=>{cam.x=Math.max(0,Math.min(W-960,buildings[0].x-480));cam.y=Math.max(0,Math.min(H-600,buildings[0].y-300))};
-canvas.addEventListener('click',e=>{
- const p=world(e.clientX,e.clientY);
- if(placing){if(freeSpot(p.x,p.y)){metal-=placing.cost;buildings.push({type:placing.type,x:p.x,y:p.y,w:placing.w,h:placing.h,label:placing.label});if(placing.type==='solar')energy+=25;say(placing.label+' построен.');placing=null;sync()}else say('Это место занято.');return}
- const b=buildings.find(b=>Math.abs(p.x-b.x)<b.w/2+6&&Math.abs(p.y-b.y)<b.h/2+6);
- const u=units.find(u=>Math.hypot(p.x-u.x,p.y-u.y)<23);
- const n=nodes.find(n=>Math.hypot(p.x-n.x,p.y-n.y)<19);
- if(u){selected=u;say(u.label+' выбран. Щёлкни по карте, чтобы переместить.');return}
- if(b){selected=b;say(b.label+' выбран.');return}
- if(n){say('Месторождение металла: '+n.amount+' единиц. Выбери сборщик и нажми «Собрать ближайший металл».');return}
- if(selected&&units.includes(selected)){selected.tx=p.x;selected.ty=p.y;selected.task=null;say(selected.label+' получил приказ переместиться.')}
- else selected=null;
-});
-const keys={};
-const keyMap={KeyW:'w',KeyA:'a',KeyS:'s',KeyD:'d',ArrowUp:'w',ArrowLeft:'a',ArrowDown:'s',ArrowRight:'d'};
-canvas.addEventListener('pointerdown',()=>canvas.focus({preventScroll:true}));
-window.addEventListener('keydown',e=>{
- const k=keyMap[e.code];
- if(k){keys[k]=true;e.preventDefault()}
-});
-window.addEventListener('keyup',e=>{const k=keyMap[e.code];if(k)keys[k]=false});
-window.addEventListener('blur',()=>{for(const k of Object.keys(keys))keys[k]=false});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){for(const k of Object.keys(keys))keys[k]=false}});
-let last=performance.now();function loop(now){let dt=Math.min(.04,(now-last)/1000);last=now;tick+=dt;
- if(keys.a)cam.x-=260*dt;if(keys.d)cam.x+=260*dt;if(keys.w)cam.y-=260*dt;if(keys.s)cam.y+=260*dt;cam.x=Math.max(0,Math.min(W-960,cam.x));cam.y=Math.max(0,Math.min(H-600,cam.y));
- for(const u of units){
-  const dx=u.tx-u.x,dy=u.ty-u.y,dist=Math.hypot(dx,dy),speed=u.type==='hauler'?75:110;
-  if(dist>2){u.x+=dx/dist*Math.min(dist,speed*dt);u.y+=dy/dist*Math.min(dist,speed*dt)}
-  if(u.task&&Math.hypot(u.x-u.task.x,u.y-u.task.y)<15){const n=u.task,amount=Math.min(n.amount,12*dt);n.amount-=amount;metal+=amount;if(n.amount<=0){u.task=null;say('Месторождение исчерпано.');}sync()}
- }
- if(tick>2){tick=0;energy+=buildings.filter(b=>b.type==='solar').length*.5;sync()}
- draw();requestAnimationFrame(loop)}
-sync();requestAnimationFrame(loop);
-})();
-</script>
 </body>
 </html>
