@@ -55,9 +55,9 @@ jobs:
           if "</head>" not in html:
               raise SystemExit("Cannot patch Web Edition: </head> not found")
           if 'name="viewport"' not in html:
-              html = html.replace("</head>", viewport + "\\n" + "</head>", 1)
+              html = html.replace("</head>", viewport + "\n" + "</head>", 1)
           if stylesheet not in html:
-              html = html.replace("</head>", stylesheet + "\\n" + "</head>", 1)
+              html = html.replace("</head>", stylesheet + "\n" + "</head>", 1)
           p.write_text(html, encoding="utf-8")
           check = p.read_text(encoding="utf-8")
           if stylesheet not in check or 'name="viewport"' not in check:
