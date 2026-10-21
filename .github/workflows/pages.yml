@@ -115,7 +115,7 @@ jobs:
               html = path.read_text(encoding="utf-8")
               marker = 'src="' + src + '"'
               if marker not in html:
-                  script = '<script src="' + src + '"></script>\\n'
+                  script = '<script src="' + src + '"></script>' + chr(10)
                   if "</head>" not in html:
                       raise SystemExit(f"Cannot inject service worker helper into {path}: no </head>")
                   html = html.replace("</head>", script + "</head>", 1)
