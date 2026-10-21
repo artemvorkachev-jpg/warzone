@@ -98,6 +98,33 @@ jobs:
           if [ -d assets ]; then cp -a assets site/; fi
           touch site/.nojekyll
 
+      - name: Add cross-origin isolation support for WebAssembly threads
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 \
+            "https://raw.githubusercontent.com/gzuidhof/coi-serviceworker/master/coi-serviceworker.min.js" \
+            --output site/coi-serviceworker.min.js
+          test -s site/coi-serviceworker.min.js
+          python3 - <<'PY'
+          from pathlib import Path
+          targets = [
+              (Path("site/index.html"), "./coi-serviceworker.min.js"),
+              (Path("site/game/index.html"), "../coi-serviceworker.min.js"),
+          ]
+          for path, src in targets:
+              html = path.read_text(encoding="utf-8")
+              marker = 'src="' + src + '"'
+              if marker not in html:
+                  script = '<script src="' + src + '"></script>\\n'
+                  if "</head>" not in html:
+                      raise SystemExit(f"Cannot inject service worker helper into {path}: no </head>")
+                  html = html.replace("</head>", script + "</head>", 1)
+                  path.write_text(html, encoding="utf-8")
+              if marker not in path.read_text(encoding="utf-8"):
+                  raise SystemExit(f"Service worker helper verification failed for {path}")
+          print("Added cross-origin isolation helper to site and game pages")
+          PY
+
       - name: Verify published files
         run: |
           set -euo pipefail
