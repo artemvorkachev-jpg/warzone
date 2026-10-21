@@ -45,56 +45,28 @@ jobs:
           game_root="$(dirname "$game_index")"
           cp -a "$game_root"/. site/game/
           test -s site/game/index.html
+          cp warzone-mobile-layout.css site/game/warzone-mobile-layout.css
           python3 - <<'PY'
           from pathlib import Path
           p = Path("site/game/index.html")
           html = p.read_text(encoding="utf-8")
-          mobile_css = """
-          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-          <style id="mobile-landscape-support">
-            html, body {
-              max-width: 100% !important;
-              margin: 0 !important;
-            }
-            .small-screen-blocker { display: none !important; }
-            @media (orientation: landscape) {
-              html, body {
-                width: 100vw !important;
-                height: 100vh !important;
-                min-width: 0 !important;
-                min-height: 0 !important;
-                overflow: hidden !important;
-              }
-              #emscripten_container {
-                position: fixed !important;
-                inset: 0 !important;
-                width: 100vw !important;
-                height: 100vh !important;
-                overflow: hidden !important;
-              }
-              canvas.emscripten {
-                width: 100vw !important;
-                height: 100vh !important;
-                max-width: 100vw !important;
-                max-height: 100vh !important;
-              }
-            }
-          </style>
-          """
-          if 'id="mobile-landscape-support"' in html:
-              start = html.index('<style id="mobile-landscape-support">')
-              end = html.index('</style>', start) + len('</style>')
-              html = html[:start] + mobile_css[mobile_css.index('<style'):mobile_css.index('</style>') + len('</style>')] + html[end:]
-          else:
-              if "</head>" not in html:
-                  raise SystemExit("Cannot patch Web Edition: </head> not found")
-              html = html.replace("</head>", mobile_css + "\n</head>", 1)
+          viewport = '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover>'
+          stylesheet = '<link rel="stylesheet" href="./warzone-mobile-layout.css">'
+          if "</head>" not in html:
+              raise SystemExit("Cannot patch Web Edition: </head> not found")
+          if 'name="viewport"' not in html:
+              html = html.replace("</head>", viewport + "\\n" + "</head>", 1)
+          if stylesheet not in html:
+              html = html.replace("</head>", stylesheet + "\\n" + "</head>", 1)
           p.write_text(html, encoding="utf-8")
           check = p.read_text(encoding="utf-8")
-          if 'id="mobile-landscape-support"' not in check or ".small-screen-blocker" not in check:
-              raise SystemExit("Mobile viewport patch verification failed")
-          print("Added centered, no-scroll phone layout for portrait and landscape")
+          if stylesheet not in check or 'name="viewport"' not in check:
+              raise SystemExit("Mobile layout stylesheet verification failed")
+          if not Path("site/game/warzone-mobile-layout.css").is_file():
+              raise SystemExit("Mobile layout stylesheet was not copied")
+          print("Added separate centered canvas stylesheet for portrait and landscape")
           PY
+
 
       - name: Assemble site
         run: |
