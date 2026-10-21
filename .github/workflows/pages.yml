@@ -156,11 +156,7 @@ jobs:
               };
               const finishTouch = (x, y) => {
                 if (!touch) return;
-                if (touch.mode === "box") {
-                  sendMouse("mouseup", x, y);
-                  // A stationary second tap should behave as a regular single-unit click.
-                  if (!touch.moved) sendMouse("click", x, y);
-                } else if (touch.mode === "pan") {
+                if (touch.mode === "pan") {
                   stopKey();
                 } else if (touch.mode === "tap") {
                   const point = { x: touch.startX, y: touch.startY };
@@ -175,7 +171,7 @@ jobs:
               };
               canvas.addEventListener("touchstart", event => {
                 if (event.touches.length !== 1) {
-                  if (touch && touch.mode === "box") sendMouse("mouseup", touch.x, touch.y);
+                  /* No selection-box mouse gesture is emitted for touch input. */
                   stopKey();
                   if (touch && touch.holdTimer) clearTimeout(touch.holdTimer);
                   touch = null;
@@ -189,13 +185,12 @@ jobs:
                 canvas.focus({ preventScroll: true });
                 touch = {
                   startX: t.clientX, startY: t.clientY, x: t.clientX, y: t.clientY,
-                  mode: isDouble ? "box" : "pending", moved: false, key: null, holdTimer: null
+                  mode: isDouble ? "pan" : "pending", moved: false, key: null, holdTimer: null
                 };
                 if (isDouble) {
                   lastTap = null;
                   clearPendingTap();
-                  // Begin a drag-selection only on the second tap; one tap never starts a box.
-                  sendMouse("mousedown", t.clientX, t.clientY);
+                  // Double-tap then drag pans the map instead of drawing a selection box.
                 } else {
                   lastTap = { x: t.clientX, y: t.clientY, time: now };
                   touch.holdTimer = setTimeout(() => {
@@ -214,9 +209,7 @@ jobs:
                   if (touch.holdTimer) { clearTimeout(touch.holdTimer); touch.holdTimer = null; }
                   if (touch.mode === "pending") touch.mode = "pan";
                 }
-                if (touch.mode === "box") {
-                  sendMouse("mousemove", t.clientX, t.clientY);
-                } else if (touch.mode === "pan" && touch.moved) {
+                if (touch.mode === "pan" && touch.moved) {
                   const nextKey = keyFor(dx, dy);
                   if (nextKey && nextKey !== touch.key) {
                     stopKey();
