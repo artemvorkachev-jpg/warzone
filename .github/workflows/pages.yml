@@ -119,11 +119,7 @@ jobs:
               };
               const sendKey = (type, key) => {
                 if (!key) return;
-                const event = new KeyboardEvent(type, {
-                  key, code: key, bubbles: true, cancelable: true
-                });
-                document.dispatchEvent(event);
-                window.dispatchEvent(new KeyboardEvent(type, {
+                document.dispatchEvent(new KeyboardEvent(type, {
                   key, code: key, bubbles: true, cancelable: true
                 }));
               };
