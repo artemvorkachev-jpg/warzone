@@ -80,14 +80,19 @@ jobs:
             }
           </style>
           """
-          if 'id="mobile-landscape-support"' not in html:
+          if 'id="mobile-landscape-support"' in html:
+              start = html.index('<style id="mobile-landscape-support">')
+              end = html.index('</style>', start) + len('</style>')
+              html = html[:start] + mobile_css[mobile_css.index('<meta'):mobile_css.index('</style>') + len('</style>')] + html[end:]
+          else:
               if "</head>" not in html:
                   raise SystemExit("Cannot patch Web Edition: </head> not found")
               html = html.replace("</head>", mobile_css + "\n</head>", 1)
-              p.write_text(html, encoding="utf-8")
-          if 'id="mobile-landscape-support"' not in p.read_text(encoding="utf-8"):
-              raise SystemExit("Mobile landscape patch verification failed")
-          print("Added landscape phone support to the Web Edition shell")
+          p.write_text(html, encoding="utf-8")
+          check = p.read_text(encoding="utf-8")
+          if 'id="mobile-landscape-support"' not in check or "100dvh" not in check:
+              raise SystemExit("Mobile viewport patch verification failed")
+          print("Added centered, no-scroll phone layout for portrait and landscape")
           PY
 
       - name: Assemble site
@@ -95,6 +100,8 @@ jobs:
           set -euo pipefail
           mkdir -p site
           cp index.html site/index.html
+          cp diagnostic.html site/diagnostic.html
+          cp diagnostic.html site/game/diagnostic.html
           if [ -d assets ]; then cp -a assets site/; fi
           touch site/.nojekyll
 
@@ -105,11 +112,19 @@ jobs:
             "https://raw.githubusercontent.com/gzuidhof/coi-serviceworker/master/coi-serviceworker.min.js" \
             --output site/coi-serviceworker.min.js
           test -s site/coi-serviceworker.min.js
+          cp site/coi-serviceworker.min.js site/game/coi-serviceworker.min.js
+          test -s site/game/coi-serviceworker.min.js
+          # The upstream game registers its own service-worker.js at /game/,
+          # which overrides cross-origin isolation. Keep the same scope but use
+          # the COI worker implementation there so WebAssembly threads can run.
+          if [ -f site/game/service-worker.js ]; then
+            cp site/game/coi-serviceworker.min.js site/game/service-worker.js
+          fi
           python3 - <<'PY'
           from pathlib import Path
           targets = [
               (Path("site/index.html"), "./coi-serviceworker.min.js"),
-              (Path("site/game/index.html"), "../coi-serviceworker.min.js"),
+              (Path("site/game/index.html"), "./coi-serviceworker.min.js"),
           ]
           for path, src in targets:
               html = path.read_text(encoding="utf-8")
@@ -118,7 +133,7 @@ jobs:
                   script = '<script src="' + src + '"></script>' + chr(10)
                   if "</head>" not in html:
                       raise SystemExit(f"Cannot inject service worker helper into {path}: no </head>")
-                  html = html.replace("</head>", script + "</head>", 1)
+                  html = html.replace("<head>", "<head>\n" + script, 1)
                   path.write_text(html, encoding="utf-8")
               if marker not in path.read_text(encoding="utf-8"):
                   raise SystemExit(f"Service worker helper verification failed for {path}")
@@ -132,6 +147,8 @@ jobs:
           test -s site/game/index.html
           echo "Root page: $(wc -c < site/index.html) bytes"
           echo "Game page: $(wc -c < site/game/index.html) bytes"
+          test -s site/game/coi-serviceworker.min.js
+          echo "Game-scoped isolation helper: present"
           find site/game -maxdepth 2 -type f | sort | head -40
 
       - name: Upload site files
