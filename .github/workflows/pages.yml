@@ -106,11 +106,13 @@ jobs:
             "https://raw.githubusercontent.com/gzuidhof/coi-serviceworker/master/coi-serviceworker.min.js" \
             --output site/coi-serviceworker.min.js
           test -s site/coi-serviceworker.min.js
+          cp site/coi-serviceworker.min.js site/game/coi-serviceworker.min.js
+          test -s site/game/coi-serviceworker.min.js
           python3 - <<'PY'
           from pathlib import Path
           targets = [
               (Path("site/index.html"), "./coi-serviceworker.min.js"),
-              (Path("site/game/index.html"), "../coi-serviceworker.min.js"),
+              (Path("site/game/index.html"), "./coi-serviceworker.min.js"),
           ]
           for path, src in targets:
               html = path.read_text(encoding="utf-8")
@@ -133,6 +135,8 @@ jobs:
           test -s site/game/index.html
           echo "Root page: $(wc -c < site/index.html) bytes"
           echo "Game page: $(wc -c < site/game/index.html) bytes"
+          test -s site/game/coi-serviceworker.min.js
+          echo "Game-scoped isolation helper: present"
           find site/game -maxdepth 2 -type f | sort | head -40
 
       - name: Upload site files
