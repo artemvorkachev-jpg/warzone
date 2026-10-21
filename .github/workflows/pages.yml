@@ -178,6 +178,7 @@ jobs:
                 if (selecting) {
                   sendMouse("mouseup", lastX, lastY);
                   sendMouse("click", lastX, lastY);
+                  selecting = false;
                 }
                 stop();
               }, { passive: false });
