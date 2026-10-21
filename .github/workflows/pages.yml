@@ -56,6 +56,16 @@ jobs:
               margin: 0 !important;
             }
             .small-screen-blocker { display: none !important; }
+            /* Let taps reach the game canvas; avoid Safari's double-tap zoom. */
+            canvas.emscripten, #emscripten_container {
+              touch-action: none !important;
+              -webkit-tap-highlight-color: transparent;
+              -webkit-user-select: none;
+              user-select: none;
+            }
+            canvas.emscripten {
+              cursor: default;
+            }
             @media (orientation: landscape) {
               html, body {
                 width: 100vw !important;
