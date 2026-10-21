@@ -45,6 +45,47 @@ jobs:
           game_root="$(dirname "$game_index")"
           cp -a "$game_root"/. site/game/
           test -s site/game/index.html
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("site/game/index.html")
+          html = p.read_text(encoding="utf-8")
+          mobile_css = """
+          <style id="mobile-landscape-support">
+            @media (orientation: landscape) and (max-height: 520px) {
+              html, body {
+                width: 100% !important;
+                height: 100% !important;
+                min-width: 0 !important;
+                min-height: 0 !important;
+                margin: 0 !important;
+                overflow: hidden !important;
+              }
+              .small-screen-blocker { display: none !important; }
+              #emscripten_container {
+                position: fixed !important;
+                inset: 0 !important;
+                width: 100vw !important;
+                height: 100dvh !important;
+                overflow: hidden !important;
+              }
+              canvas.emscripten {
+                width: 100vw !important;
+                height: 100dvh !important;
+                max-width: 100vw !important;
+                max-height: 100dvh !important;
+              }
+            }
+          </style>
+          """
+          if 'id="mobile-landscape-support"' not in html:
+              if "</head>" not in html:
+                  raise SystemExit("Cannot patch Web Edition: </head> not found")
+              html = html.replace("</head>", mobile_css + "\\n</head>", 1)
+              p.write_text(html, encoding="utf-8")
+          if 'id="mobile-landscape-support"' not in p.read_text(encoding="utf-8"):
+              raise SystemExit("Mobile landscape patch verification failed")
+          print("Added landscape phone support to the Web Edition shell")
+          PY
 
       - name: Assemble site
         run: |
