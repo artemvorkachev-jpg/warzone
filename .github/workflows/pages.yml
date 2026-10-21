@@ -55,21 +55,7 @@ jobs:
               max-width: 100% !important;
               margin: 0 !important;
             }
-            html, body {
-              max-width: 100% !important;
-              margin: 0 !important;
-            }
             .small-screen-blocker { display: none !important; }
-            /* Let taps reach the game canvas; avoid Safari's double-tap zoom. */
-            canvas.emscripten, #emscripten_container {
-              touch-action: none !important;
-              -webkit-tap-highlight-color: transparent;
-              -webkit-user-select: none;
-              user-select: none;
-            }
-            canvas.emscripten {
-              cursor: default;
-            }
             @media (orientation: landscape) {
               html, body {
                 width: 100vw !important;
@@ -90,7 +76,8 @@ jobs:
                 height: 100vh !important;
                 max-width: 100vw !important;
                 max-height: 100vh !important;
-              }            }
+              }
+            }
           </style>
           """
           if 'id="mobile-landscape-support"' not in html:
@@ -128,7 +115,7 @@ jobs:
               html = path.read_text(encoding="utf-8")
               marker = 'src="' + src + '"'
               if marker not in html:
-                  script = '<script src="' + src + '"></script>' + chr(10)
+                  script = '<script src="' + src + '"></script>\\n'
                   if "</head>" not in html:
                       raise SystemExit(f"Cannot inject service worker helper into {path}: no </head>")
                   html = html.replace("</head>", script + "</head>", 1)
