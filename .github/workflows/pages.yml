@@ -50,6 +50,7 @@ jobs:
           p = Path("site/game/index.html")
           html = p.read_text(encoding="utf-8")
           mobile_css = """
+          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
           <style id="mobile-landscape-support">
             html, body {
               max-width: 100% !important;
@@ -83,14 +84,14 @@ jobs:
           if 'id="mobile-landscape-support"' in html:
               start = html.index('<style id="mobile-landscape-support">')
               end = html.index('</style>', start) + len('</style>')
-              html = html[:start] + mobile_css[mobile_css.index('<meta'):mobile_css.index('</style>') + len('</style>')] + html[end:]
+              html = html[:start] + mobile_css[mobile_css.index('<style'):mobile_css.index('</style>') + len('</style>')] + html[end:]
           else:
               if "</head>" not in html:
                   raise SystemExit("Cannot patch Web Edition: </head> not found")
               html = html.replace("</head>", mobile_css + "\n</head>", 1)
           p.write_text(html, encoding="utf-8")
           check = p.read_text(encoding="utf-8")
-          if 'id="mobile-landscape-support"' not in check or "100dvh" not in check:
+          if 'id="mobile-landscape-support"' not in check or ".small-screen-blocker" not in check:
               raise SystemExit("Mobile viewport patch verification failed")
           print("Added centered, no-scroll phone layout for portrait and landscape")
           PY
