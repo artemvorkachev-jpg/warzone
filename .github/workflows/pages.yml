@@ -103,6 +103,71 @@ jobs:
               if "</head>" not in html:
                   raise SystemExit("Cannot patch Web Edition: </head> not found")
               html = html.replace("</head>", mobile_css + "\n</head>", 1)
+          touch_script = """
+          <script id="mobile-touch-pan">
+          (() => {
+            const install = () => {
+              const canvas = document.querySelector("canvas.emscripten");
+              if (!canvas || canvas.dataset.touchPanInstalled) return;
+              canvas.dataset.touchPanInstalled = "1";
+              canvas.style.touchAction = "none";
+              let lastX = 0, lastY = 0, activeKey = null, dragging = false;
+              const keyFor = (dx, dy) => {
+                if (Math.max(Math.abs(dx), Math.abs(dy)) < 7) return null;
+                if (Math.abs(dx) >= Math.abs(dy)) return dx > 0 ? "ArrowLeft" : "ArrowRight";
+                return dy > 0 ? "ArrowUp" : "ArrowDown";
+              };
+              const sendKey = (type, key) => {
+                if (!key) return;
+                const event = new KeyboardEvent(type, {
+                  key, code: key, bubbles: true, cancelable: true
+                });
+                document.dispatchEvent(event);
+                window.dispatchEvent(new KeyboardEvent(type, {
+                  key, code: key, bubbles: true, cancelable: true
+                }));
+              };
+              const stop = () => {
+                if (activeKey) sendKey("keyup", activeKey);
+                activeKey = null;
+                dragging = false;
+              };
+              canvas.addEventListener("touchstart", event => {
+                if (event.touches.length !== 1) { stop(); return; }
+                const t = event.touches[0];
+                lastX = t.clientX; lastY = t.clientY; dragging = true;
+                canvas.focus({ preventScroll: true });
+                event.preventDefault();
+              }, { passive: false });
+              canvas.addEventListener("touchmove", event => {
+                if (!dragging || event.touches.length !== 1) return;
+                const t = event.touches[0];
+                const dx = t.clientX - lastX, dy = t.clientY - lastY;
+                lastX = t.clientX; lastY = t.clientY;
+                const nextKey = keyFor(dx, dy);
+                if (nextKey && nextKey !== activeKey) {
+                  if (activeKey) sendKey("keyup", activeKey);
+                  activeKey = nextKey;
+                  sendKey("keydown", activeKey);
+                }
+                event.preventDefault();
+              }, { passive: false });
+              canvas.addEventListener("touchend", stop, { passive: true });
+              canvas.addEventListener("touchcancel", stop, { passive: true });
+            };
+            if (document.readyState === "loading") {
+              document.addEventListener("DOMContentLoaded", install, { once: true });
+            } else install();
+            new MutationObserver(install).observe(document.documentElement, {
+              childList: true, subtree: true
+            });
+          })();
+          </script>
+          """
+          if 'id="mobile-touch-pan"' not in html:
+              if "</body>" not in html:
+                  raise SystemExit("Cannot patch Web Edition: </body> not found")
+              html = html.replace("</body>", touch_script + "\\n</body>", 1)
           p.write_text(html, encoding="utf-8")
           check = p.read_text(encoding="utf-8")
           if 'id="mobile-landscape-support"' not in check or ".small-screen-blocker" not in check:
