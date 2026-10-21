@@ -54,6 +54,15 @@ jobs:
           if [ -d assets ]; then cp -a assets site/; fi
           touch site/.nojekyll
 
+      - name: Verify published files
+        run: |
+          set -euo pipefail
+          test -s site/index.html
+          test -s site/game/index.html
+          echo "Root page: $(wc -c < site/index.html) bytes"
+          echo "Game page: $(wc -c < site/game/index.html) bytes"
+          find site/game -maxdepth 2 -type f | sort | head -40
+
       - name: Upload site files
         uses: actions/upload-pages-artifact@v3
         with:
