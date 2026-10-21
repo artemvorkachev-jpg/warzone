@@ -101,8 +101,10 @@ jobs:
           set -euo pipefail
           mkdir -p site
           cp index.html site/index.html
-          cp diagnostic.html site/diagnostic.html
-          cp diagnostic.html site/game/diagnostic.html
+          if [ -f diagnostic.html ]; then
+            cp diagnostic.html site/diagnostic.html
+            cp diagnostic.html site/game/diagnostic.html
+          fi
           if [ -d assets ]; then cp -a assets site/; fi
           touch site/.nojekyll
 
