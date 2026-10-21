@@ -109,6 +109,12 @@ jobs:
           test -s site/coi-serviceworker.min.js
           cp site/coi-serviceworker.min.js site/game/coi-serviceworker.min.js
           test -s site/game/coi-serviceworker.min.js
+          # The upstream game registers its own service-worker.js at /game/,
+          # which overrides cross-origin isolation. Keep the same scope but use
+          # the COI worker implementation there so WebAssembly threads can run.
+          if [ -f site/game/service-worker.js ]; then
+            cp site/game/coi-serviceworker.min.js site/game/service-worker.js
+          fi
           python3 - <<'PY'
           from pathlib import Path
           targets = [
