@@ -169,8 +169,8 @@ jobs:
                   // A stationary double-tap becomes a real double-click for the game
                   // (e.g. inspect a unit); it never becomes a map-move command.
                   const point = { x: touch.startX, y: touch.startY };
-                  clickAt(point.x, point.y);
-                  clickAt(point.x, point.y);
+                  // Emit only a double-click event here: do not replay two taps,
+                  // because a second ordinary click could issue a second unit order.
                   sendMouse("dblclick", point.x, point.y);
                 }
                 if (touch.holdTimer) clearTimeout(touch.holdTimer);
