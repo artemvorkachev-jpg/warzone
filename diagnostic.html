@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Диагностика Warzone 2100</title>
+<style>
+body{font:16px/1.5 system-ui,-apple-system,sans-serif;background:#101714;color:#eef5ef;margin:0;padding:20px}
+main{max-width:760px;margin:auto}h1{font-size:26px}p{color:#c6d2ca}
+button,a{font:inherit;padding:10px 14px;border-radius:8px;border:1px solid #73936d;background:#c4ed91;color:#162015;font-weight:700;display:inline-block;margin:6px 6px 6px 0;text-decoration:none}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#1b2621;border:1px solid #3e5949;border-radius:8px;padding:14px}
+</style>
+</head>
+<body>
+<main>
+<h1>Диагностика Warzone 2100</h1>
+<p>Эта страница проверяет возможности браузера и работу cross-origin isolation, нужную сборке Wasm:Threads. Если значения ещё не обновились, нажми «Проверить снова».</p>
+<pre id="out">Проверка…</pre>
+<button onclick="location.reload()">Проверить снова</button>
+<a href="./game/">Открыть игру</a>
+<script>
+(async()=>{
+const out=document.getElementById('out');
+const lines=[];
+const add=(k,v)=>lines.push(k+': '+v);
+add('Браузер',navigator.userAgent);
+add('crossOriginIsolated',String(window.crossOriginIsolated));
+add('SharedArrayBuffer',typeof SharedArrayBuffer);
+add('WebAssembly',typeof WebAssembly);
+add('WebAssembly.validate',typeof WebAssembly==='object'&&typeof WebAssembly.validate==='function'?'доступен':'недоступен');
+add('Потоки WebAssembly (проверка)',(()=>{try{if(typeof WebAssembly!=='object')return 'WebAssembly отсутствует';const m=new WebAssembly.Module(new Uint8Array([0,97,115,109,1,0,0,0,5,4,1,3,1,1]));return m?'поддерживаются':'не поддерживаются'}catch(e){return 'не поддерживаются ('+e.message+')'}})());
+add('Service Worker API', 'serviceWorker' in navigator ? 'доступен' : 'недоступен');
+try{add('Service Worker controller',navigator.serviceWorker.controller?navigator.serviceWorker.controller.scriptURL:'нет активного контроллера')}catch(e){add('Service Worker controller','ошибка: '+e.message)}
+try{const regs=await navigator.serviceWorker.getRegistrations();add('Регистрации Service Worker',regs.length?regs.map(r=>r.scope+' [active='+(r.active?r.active.scriptURL:'нет')+']').join('\n'):'нет')}catch(e){add('Регистрации Service Worker','ошибка: '+e.message)}
+add('Страница',location.href);
+out.textContent=lines.join('\n');
+})();
+</script>
+<script src="./coi-serviceworker.min.js"></script>
+</main>
+</body>
+</html>
