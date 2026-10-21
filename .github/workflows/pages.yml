@@ -111,44 +111,76 @@ jobs:
               if (!canvas || canvas.dataset.touchPanInstalled) return;
               canvas.dataset.touchPanInstalled = "1";
               canvas.style.touchAction = "none";
-              let lastX = 0, lastY = 0, activeKey = null, dragging = false;
+              let startX = 0, startY = 0, lastX = 0, lastY = 0;
+              let activeKey = null, gesture = false, moved = false, selecting = false, holdTimer = null;
               const keyFor = (dx, dy) => {
-                if (Math.max(Math.abs(dx), Math.abs(dy)) < 7) return null;
+                if (Math.max(Math.abs(dx), Math.abs(dy)) < 3) return null;
                 if (Math.abs(dx) >= Math.abs(dy)) return dx > 0 ? "ArrowLeft" : "ArrowRight";
                 return dy > 0 ? "ArrowUp" : "ArrowDown";
               };
               const sendKey = (type, key) => {
-                if (!key) return;
-                document.dispatchEvent(new KeyboardEvent(type, {
+                if (key) document.dispatchEvent(new KeyboardEvent(type, {
                   key, code: key, bubbles: true, cancelable: true
                 }));
               };
+              const sendMouse = (type, x, y) => {
+                canvas.dispatchEvent(new MouseEvent(type, {
+                  bubbles: true, cancelable: true, view: window, button: 0,
+                  buttons: type === "mouseup" ? 0 : 1, clientX: x, clientY: y
+                }));
+              };
               const stop = () => {
+                if (holdTimer !== null) clearTimeout(holdTimer);
+                holdTimer = null;
                 if (activeKey) sendKey("keyup", activeKey);
+                if (selecting) sendMouse("mouseup", lastX, lastY);
                 activeKey = null;
-                dragging = false;
+                gesture = false;
+                moved = false;
+                selecting = false;
               };
               canvas.addEventListener("touchstart", event => {
                 if (event.touches.length !== 1) { stop(); return; }
                 const t = event.touches[0];
-                lastX = t.clientX; lastY = t.clientY; dragging = true;
+                startX = lastX = t.clientX;
+                startY = lastY = t.clientY;
+                gesture = true; moved = false; selecting = false;
                 canvas.focus({ preventScroll: true });
+                holdTimer = setTimeout(() => {
+                  if (!gesture || moved) return;
+                  selecting = true;
+                  sendMouse("mousedown", startX, startY);
+                }, 450);
                 event.preventDefault();
               }, { passive: false });
               canvas.addEventListener("touchmove", event => {
-                if (!dragging || event.touches.length !== 1) return;
+                if (!gesture || event.touches.length !== 1) return;
                 const t = event.touches[0];
                 const dx = t.clientX - lastX, dy = t.clientY - lastY;
-                lastX = t.clientX; lastY = t.clientY;
-                const nextKey = keyFor(dx, dy);
-                if (nextKey && nextKey !== activeKey) {
-                  if (activeKey) sendKey("keyup", activeKey);
-                  activeKey = nextKey;
-                  sendKey("keydown", activeKey);
+                if (Math.hypot(t.clientX - startX, t.clientY - startY) > 9) {
+                  moved = true;
+                  if (holdTimer !== null) { clearTimeout(holdTimer); holdTimer = null; }
                 }
+                if (selecting) {
+                  sendMouse("mousemove", t.clientX, t.clientY);
+                } else if (moved) {
+                  const nextKey = keyFor(dx, dy);
+                  if (nextKey && nextKey !== activeKey) {
+                    if (activeKey) sendKey("keyup", activeKey);
+                    activeKey = nextKey;
+                    sendKey("keydown", activeKey);
+                  }
+                }
+                lastX = t.clientX; lastY = t.clientY;
                 event.preventDefault();
               }, { passive: false });
-              canvas.addEventListener("touchend", stop, { passive: true });
+              canvas.addEventListener("touchend", event => {
+                if (selecting) {
+                  sendMouse("mouseup", lastX, lastY);
+                  sendMouse("click", lastX, lastY);
+                }
+                stop();
+              }, { passive: false });
               canvas.addEventListener("touchcancel", stop, { passive: true });
             };
             if (document.readyState === "loading") {
