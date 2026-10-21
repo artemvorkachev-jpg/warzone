@@ -112,7 +112,7 @@ jobs:
               canvas.dataset.touchPanInstalled = "1";
               canvas.style.touchAction = "none";
               let touch = null, pendingTap = null, lastTap = null;
-              const DOUBLE_MS = 330, MOVE_LIMIT = 10, HOLD_MS = 320;
+              const DOUBLE_MS = 330, MOVE_LIMIT = 10;
               // Safari may synthesize trusted mouse events after a long touch.
               // Block those native compatibility events; this script emits its own
               // deliberate MouseEvents for taps and second-tap drag selection.
@@ -193,11 +193,7 @@ jobs:
                   // Double-tap then drag pans the map instead of drawing a selection box.
                 } else {
                   lastTap = { x: t.clientX, y: t.clientY, time: now };
-                  touch.holdTimer = setTimeout(() => {
-                    if (!touch || touch.mode !== "pending" || touch.moved) return;
-                    clearPendingTap();
-                    touch.mode = "pan";
-                  }, HOLD_MS);
+                  // A single touch never pans the map, even if held or dragged.
                 }
                 event.preventDefault();
               }, { passive: false, capture: true });
@@ -207,7 +203,7 @@ jobs:
                 if (Math.hypot(t.clientX - touch.startX, t.clientY - touch.startY) > MOVE_LIMIT) {
                   touch.moved = true;
                   if (touch.holdTimer) { clearTimeout(touch.holdTimer); touch.holdTimer = null; }
-                  if (touch.mode === "pending") touch.mode = "pan";
+
                 }
                 if (touch.mode === "pan" && touch.moved) {
                   const nextKey = keyFor(dx, dy);
@@ -227,7 +223,6 @@ jobs:
                 event.preventDefault();
               }, { passive: false, capture: true });
               canvas.addEventListener("touchcancel", event => {
-                if (touch && touch.mode === "box") sendMouse("mouseup", touch.x, touch.y);
                 stopKey();
                 if (touch && touch.holdTimer) clearTimeout(touch.holdTimer);
                 touch = null;
