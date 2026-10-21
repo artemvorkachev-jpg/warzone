@@ -79,7 +79,7 @@ jobs:
               }
             }
           </style>
-
+          """
           if 'id="mobile-landscape-support"' not in html:
               if "</head>" not in html:
                   raise SystemExit("Cannot patch Web Edition: </head> not found")
