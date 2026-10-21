@@ -111,78 +111,131 @@ jobs:
               if (!canvas || canvas.dataset.touchPanInstalled) return;
               canvas.dataset.touchPanInstalled = "1";
               canvas.style.touchAction = "none";
-              let startX = 0, startY = 0, lastX = 0, lastY = 0;
-              let activeKey = null, gesture = false, moved = false, selecting = false, holdTimer = null;
+              let touch = null, pendingTap = null, lastTap = null;
+              const DOUBLE_MS = 330, MOVE_LIMIT = 10, HOLD_MS = 320;
+              const sendKey = (type, key) => {
+                if (key) {
+                  const target = document.activeElement || canvas;
+                  target.dispatchEvent(new KeyboardEvent(type, {
+                    key, code: key, bubbles: true, cancelable: true
+                  }));
+                  document.dispatchEvent(new KeyboardEvent(type, {
+                    key, code: key, bubbles: true, cancelable: true
+                  }));
+                }
+              };
+              const sendMouse = (type, x, y) => canvas.dispatchEvent(new MouseEvent(type, {
+                bubbles: true, cancelable: true, view: window, button: 0,
+                buttons: type === "mouseup" || type === "click" ? 0 : 1,
+                clientX: x, clientY: y
+              }));
+              const stopKey = () => {
+                if (touch && touch.key) sendKey("keyup", touch.key);
+                if (touch) touch.key = null;
+              };
               const keyFor = (dx, dy) => {
-                if (Math.max(Math.abs(dx), Math.abs(dy)) < 3) return null;
+                if (Math.max(Math.abs(dx), Math.abs(dy)) < 2) return null;
+                // Dragging the map right should move the view to the left.
                 if (Math.abs(dx) >= Math.abs(dy)) return dx > 0 ? "ArrowLeft" : "ArrowRight";
                 return dy > 0 ? "ArrowUp" : "ArrowDown";
               };
-              const sendKey = (type, key) => {
-                if (key) document.dispatchEvent(new KeyboardEvent(type, {
-                  key, code: key, bubbles: true, cancelable: true
-                }));
-              };
-              const sendMouse = (type, x, y) => {
-                canvas.dispatchEvent(new MouseEvent(type, {
-                  bubbles: true, cancelable: true, view: window, button: 0,
-                  buttons: type === "mouseup" ? 0 : 1, clientX: x, clientY: y
-                }));
-              };
-              const stop = () => {
-                if (holdTimer !== null) clearTimeout(holdTimer);
-                holdTimer = null;
-                if (activeKey) sendKey("keyup", activeKey);
-                if (selecting) sendMouse("mouseup", lastX, lastY);
-                activeKey = null;
-                gesture = false;
-                moved = false;
-                selecting = false;
+              const finishTouch = (x, y) => {
+                if (!touch) return;
+                if (touch.mode === "box") {
+                  sendMouse("mouseup", x, y);
+                  if (!touch.moved) sendMouse("click", x, y);
+                } else if (touch.mode === "pan") {
+                  stopKey();
+                } else if (touch.mode === "tap") {
+                  const point = { x: touch.startX, y: touch.startY };
+                  if (pendingTap) clearTimeout(pendingTap.timer);
+                  pendingTap = {
+                    point,
+                    timer: setTimeout(() => {
+                      sendMouse("click", point.x, point.y);
+                      pendingTap = null;
+                    }, DOUBLE_MS)
+                  };
+                }
+                if (touch.holdTimer) clearTimeout(touch.holdTimer);
+                touch = null;
               };
               canvas.addEventListener("touchstart", event => {
-                if (event.touches.length !== 1) { stop(); return; }
-                const t = event.touches[0];
-                startX = lastX = t.clientX;
-                startY = lastY = t.clientY;
-                gesture = true; moved = false; selecting = false;
+                if (event.touches.length !== 1) {
+                  if (touch && touch.mode === "box") sendMouse("mouseup", touch.x, touch.y);
+                  stopKey();
+                  touch = null;
+                  return;
+                }
+                const t = event.touches[0], now = Date.now();
+                const sameSpot = lastTap && now - lastTap.time <= DOUBLE_MS &&
+                  Math.hypot(t.clientX - lastTap.x, t.clientY - lastTap.y) <= 36;
                 canvas.focus({ preventScroll: true });
-                holdTimer = setTimeout(() => {
-                  if (!gesture || moved) return;
-                  selecting = true;
-                  sendMouse("mousedown", startX, startY);
-                }, 450);
+                touch = {
+                  startX: t.clientX, startY: t.clientY, x: t.clientX, y: t.clientY,
+                  mode: sameSpot ? "box" : "pending", moved: false, key: null, holdTimer: null
+                };
+                if (sameSpot) {
+                  lastTap = null;
+                  if (pendingTap) {
+                    clearTimeout(pendingTap.timer);
+                    pendingTap = null;
+                  }
+                  touch.mode = "box";
+                  sendMouse("mousedown", t.clientX, t.clientY);
+                } else {
+                  lastTap = { x: t.clientX, y: t.clientY, time: now };
+                  touch.holdTimer = setTimeout(() => {
+                    if (!touch || touch.mode !== "pending" || touch.moved) return;
+                    if (pendingTap) {
+                      clearTimeout(pendingTap.timer);
+                      pendingTap = null;
+                    }
+                    touch.mode = "pan";
+                  }, HOLD_MS);
+                }
                 event.preventDefault();
               }, { passive: false });
               canvas.addEventListener("touchmove", event => {
-                if (!gesture || event.touches.length !== 1) return;
-                const t = event.touches[0];
-                const dx = t.clientX - lastX, dy = t.clientY - lastY;
-                if (Math.hypot(t.clientX - startX, t.clientY - startY) > 9) {
-                  moved = true;
-                  if (holdTimer !== null) { clearTimeout(holdTimer); holdTimer = null; }
-                }
-                if (selecting) {
-                  sendMouse("mousemove", t.clientX, t.clientY);
-                } else if (moved) {
-                  const nextKey = keyFor(dx, dy);
-                  if (nextKey && nextKey !== activeKey) {
-                    if (activeKey) sendKey("keyup", activeKey);
-                    activeKey = nextKey;
-                    sendKey("keydown", activeKey);
+                if (!touch || event.touches.length !== 1) return;
+                const t = event.touches[0], dx = t.clientX - touch.x, dy = t.clientY - touch.y;
+                if (Math.hypot(t.clientX - touch.startX, t.clientY - touch.startY) > MOVE_LIMIT) {
+                  touch.moved = true;
+                  if (touch.holdTimer) {
+                    clearTimeout(touch.holdTimer);
+                    touch.holdTimer = null;
+                  }
+                  if (touch.mode === "pending") {
+                    // A moving finger before the hold threshold is a pan gesture.
+                    touch.mode = "pan";
                   }
                 }
-                lastX = t.clientX; lastY = t.clientY;
+                if (touch.mode === "box") {
+                  sendMouse("mousemove", t.clientX, t.clientY);
+                } else if (touch.mode === "pan" && touch.moved) {
+                  const nextKey = keyFor(dx, dy);
+                  if (nextKey && nextKey !== touch.key) {
+                    stopKey();
+                    touch.key = nextKey;
+                    sendKey("keydown", nextKey);
+                  }
+                }
+                touch.x = t.clientX;
+                touch.y = t.clientY;
                 event.preventDefault();
               }, { passive: false });
               canvas.addEventListener("touchend", event => {
-                if (selecting) {
-                  sendMouse("mouseup", lastX, lastY);
-                  sendMouse("click", lastX, lastY);
-                  selecting = false;
-                }
-                stop();
+                const t = event.changedTouches[0];
+                if (touch && touch.mode === "pending" && !touch.moved) touch.mode = "tap";
+                finishTouch(t ? t.clientX : touch?.x, t ? t.clientY : touch?.y);
+                event.preventDefault();
               }, { passive: false });
-              canvas.addEventListener("touchcancel", stop, { passive: true });
+              canvas.addEventListener("touchcancel", () => {
+                if (touch && touch.mode === "box") sendMouse("mouseup", touch.x, touch.y);
+                stopKey();
+                if (touch && touch.holdTimer) clearTimeout(touch.holdTimer);
+                touch = null;
+              }, { passive: true });
             };
             if (document.readyState === "loading") {
               document.addEventListener("DOMContentLoaded", install, { once: true });
