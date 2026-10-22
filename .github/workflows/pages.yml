@@ -112,7 +112,7 @@ jobs:
               canvas.dataset.touchPanInstalled = "1";
               canvas.style.touchAction = "none";
               let touch = null, pendingTap = null, lastTap = null;
-              const DOUBLE_MS = 350, MOVE_LIMIT = 10;
+              const DOUBLE_MS = 200, MOVE_LIMIT = 10;
               // Safari may synthesize trusted mouse events after a long touch.
               // Block those native compatibility events; this script emits its own
               // deliberate MouseEvents for taps and second-tap drag selection.
@@ -166,15 +166,20 @@ jobs:
                     pendingTap = null;
                   }, DOUBLE_MS) };
                 } else if (touch.mode === "doubleCandidate" && !touch.moved) {
-                  // Do not replay ordinary mouse clicks here: in Warzone each click
-                  // can issue a move order to the selected group. Emit only the
-                  // dedicated double-click event and leave the first tap suppressed.
-                  // A unit-info action requires an engine-side handler for this event.
+                  // A stationary double-tap becomes a real double-click for the game
+                  // (e.g. inspect a unit); it never becomes a map-move command.
                   const point = { x: touch.startX, y: touch.startY };
-                  canvas.dispatchEvent(new MouseEvent("dblclick", {
-                    bubbles: true, cancelable: true, view: window, button: 0, detail: 2,
-                    clientX: point.x, clientY: point.y
-                  }));
+                  // Replay a browser-style double click so Emscripten/SDL can
+                  // recognize the engine's native double-click gesture on a unit.
+                  // Warzone's native double-click handler targets the object under
+                  // the pointer; a double tap on empty terrain must not create a move order.
+                  sendMouse("mousedown", point.x, point.y, 1);
+                  sendMouse("mouseup", point.x, point.y, 1);
+                  sendMouse("click", point.x, point.y, 1);
+                  sendMouse("mousedown", point.x, point.y, 2);
+                  sendMouse("mouseup", point.x, point.y, 2);
+                  sendMouse("click", point.x, point.y, 2);
+                  sendMouse("dblclick", point.x, point.y, 2);
                 }
                 if (touch.holdTimer) clearTimeout(touch.holdTimer);
                 touch = null;
