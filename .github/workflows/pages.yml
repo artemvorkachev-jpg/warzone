@@ -111,7 +111,7 @@ jobs:
               if (!canvas || canvas.dataset.touchPanInstalled) return;
               canvas.dataset.touchPanInstalled = "1";
               canvas.style.touchAction = "none";
-              let touch = null, pendingTap = null, lastTap = null;
+              let touch = null, pendingTap = null, lastTap = null, pinch = null;
               const DOUBLE_MS = 200, MOVE_LIMIT = 10;
               // Safari may synthesize trusted mouse events after a long touch.
               // Block those native compatibility events; this script emits its own
@@ -185,14 +185,31 @@ jobs:
                 touch = null;
               };
               canvas.addEventListener("touchstart", event => {
+                if (event.touches.length === 2) {
+                  stopKey();
+                  if (touch && touch.holdTimer) clearTimeout(touch.holdTimer);
+                  touch = null;
+                  clearPendingTap();
+                  const a = event.touches[0], b = event.touches[1];
+                  pinch = {
+                    distance: Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY),
+                    x: (a.clientX + b.clientX) / 2,
+                    y: (a.clientY + b.clientY) / 2
+                  };
+                  lastTouchAt = Date.now();
+                  event.preventDefault();
+                  return;
+                }
                 if (event.touches.length !== 1) {
-                  /* No selection-box mouse gesture is emitted for touch input. */
+                  /* Ignore unsupported multi-touch gestures. */
+                  pinch = null;
                   stopKey();
                   if (touch && touch.holdTimer) clearTimeout(touch.holdTimer);
                   touch = null;
                   event.preventDefault();
                   return;
                 }
+                pinch = null;
                 const t = event.touches[0], now = Date.now();
                 lastTouchAt = now;
                 const isDouble = !!(lastTap && now - lastTap.time <= DOUBLE_MS &&
@@ -213,6 +230,25 @@ jobs:
                 event.preventDefault();
               }, { passive: false, capture: true });
               canvas.addEventListener("touchmove", event => {
+                if (event.touches.length === 2) {
+                  const a = event.touches[0], b = event.touches[1];
+                  const distance = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+                  const x = (a.clientX + b.clientX) / 2;
+                  const y = (a.clientY + b.clientY) / 2;
+                  if (pinch && Math.abs(distance - pinch.distance) >= 1.5) {
+                    /* Translate finger spreading/pinching into the wheel event SDL uses for zoom. */
+                    canvas.dispatchEvent(new WheelEvent("wheel", {
+                      bubbles: true, cancelable: true,
+                      deltaY: pinch.distance - distance,
+                      clientX: x, clientY: y
+                    }));
+                    pinch.distance = distance;
+                    pinch.x = x;
+                    pinch.y = y;
+                  }
+                  event.preventDefault();
+                  return;
+                }
                 if (!touch || event.touches.length !== 1) return;
                 const t = event.touches[0], dx = t.clientX - touch.x, dy = t.clientY - touch.y;
                 if (Math.hypot(t.clientX - touch.startX, t.clientY - touch.startY) > MOVE_LIMIT) {
@@ -234,6 +270,8 @@ jobs:
                 event.preventDefault();
               }, { passive: false, capture: true });
               canvas.addEventListener("touchend", event => {
+                if (event.touches.length < 2) pinch = null;
+                if (!touch) { event.preventDefault(); return; }
                 const t = event.changedTouches[0];
                 if (touch && touch.mode === "pending" && !touch.moved) touch.mode = "tap";
                 finishTouch(t ? t.clientX : (touch && touch.x), t ? t.clientY : (touch && touch.y));
