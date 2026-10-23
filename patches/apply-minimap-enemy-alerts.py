@@ -29,13 +29,6 @@ replacement = """\tbool blinkState = (gameTime - lastBlink) / BLINK_HALF_INTERVA
 \t\tfor (const DROID* droid : apsDroidLists[player]) { (void)droid; ++hostileObjectsRemaining; }
 \t\tfor (const STRUCTURE* structure : apsStructLists[player]) { (void)structure; ++hostileObjectsRemaining; }
 \t}
-\tfor (const FEATURE* feature : GlobalFeatureContainer())
-\t{
-\t\tif (feature && feature->psStats && feature->psStats->subType == FEAT_GEN_ARTE)
-\t\t{
-\t\t\t++hostileObjectsRemaining;
-\t\t}
-\t}
 \tconst bool lowMissionTime = mission.time >= 0
 \t\t&& gameTime >= mission.startTime
 \t\t&& mission.time - static_cast<SDWORD>(gameTime - mission.startTime) < 5 * 60 * GAME_TICKS_PER_SEC;
