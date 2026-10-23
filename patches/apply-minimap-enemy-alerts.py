@@ -79,25 +79,5 @@ if needle not in s:
     raise SystemExit("Unsupported radar.cpp: structure color anchor not found")
 s = s.replace(needle, replacement, 1)
 
-# Patch structure dots separately; they use a different selection check than droids.
-needle = """\t\t\t\telse
-\t\t\t\t{
-\t\t\t\t\tif (psStruct->player == selectedPlayer && psStruct->selected && !blinkState)
-\t\t\t\t\t\tradarOverlayBuffer[pos] = applyAlpha(playerCol, OVERLAY_OPACITY).rgba();
-\t\t\t\t\telse
-\t\t\t\t\t\tradarOverlayBuffer[pos] = playerCol.rgba();
-\t\t\t\t}"""
-replacement = """\t\t\t\telse
-\t\t\t\t{
-\t\t\t\t\tif (minimapAlert && clan != selectedPlayer && !aiCheckAlliances(selectedPlayer, clan))
-\t\t\t\t\t\tradarOverlayBuffer[pos] = WZCOL_YELLOW.rgba();
-\t\t\t\t\telse if (psStruct->player == selectedPlayer && psStruct->selected && !blinkState)
-\t\t\t\t\t\tradarOverlayBuffer[pos] = applyAlpha(playerCol, OVERLAY_OPACITY).rgba();
-\t\t\t\t\telse
-\t\t\t\t\t\tradarOverlayBuffer[pos] = playerCol.rgba();
-\t\t\t\t}"""
-if needle not in s:
-    raise SystemExit("Unsupported radar.cpp: structure color anchor not found")
-s = s.replace(needle, replacement, 1)
 p.write_text(s, encoding="utf-8")
 print("Applied minimap enemy alert patch to src/radar.cpp")
