@@ -25,6 +25,22 @@ replacement = """\tbool blinkState = (gameTime - lastBlink) / BLINK_HALF_INTERVA
 \t\t&& mission.time - static_cast<SDWORD>(gameTime - mission.startTime) < 5 * 60 * GAME_TICKS_PER_SEC;
 \tconst bool minimapAlert = lowMissionTime || hostileObjectsRemaining < 10;
 
+\\t// Paint a crisp 3x3 yellow marker so it remains visible when the minimap is scaled down.
+\\tauto paintAlertMarker = [](int x, int y)
+\\t{
+\\t\\tfor (int dy = -1; dy <= 1; ++dy)
+\\t\\t{
+\\t\\t\\tfor (int dx = -1; dx <= 1; ++dx)
+\\t\\t\\t{
+\\t\\t\\t\\tconst int markerX = x + dx;
+\\t\\t\\t\\tconst int markerY = y + dy;
+\\t\\t\\t\\tif (markerX < scrollMinX || markerX >= scrollMaxX || markerY < scrollMinY || markerY >= scrollMaxY) continue;
+\\t\\t\\t\\tconst size_t markerPos = (markerX - scrollMinX) + (markerY - scrollMinY) * radarTexWidth;
+\\t\\t\\t\\tif (markerPos * sizeof(*radarOverlayBuffer) < radarBufferSize) radarOverlayBuffer[markerPos] = WZCOL_YELLOW.rgba();
+\\t\\t\\t}
+\\t\\t}
+\\t};
+
 \t/* Show droids on map - go through all players */"""
 if needle not in s:
     raise SystemExit("Unsupported radar.cpp: DrawRadarObjects anchor not found")
@@ -40,7 +56,7 @@ needle = """\t\t\t\telse
 replacement = """\t\t\t\telse
 \t\t\t\t{
 \t\t\t\t\tif (minimapAlert && clan != selectedPlayer && !aiCheckAlliances(selectedPlayer, clan))
-\t\t\t\t\t\tradarOverlayBuffer[pos] = WZCOL_YELLOW.rgba();
+\t\t\t\t\t\tpaintAlertMarker(x, y);
 \t\t\t\t\telse if (psDroid->selected && !blinkState)
 \t\t\t\t\t\tradarOverlayBuffer[pos] = applyAlpha(playerCol, OVERLAY_OPACITY).rgba();
 \t\t\t\t\telse
@@ -60,7 +76,7 @@ needle = """\t\t\t\telse
 replacement = """\t\t\t\telse
 \t\t\t\t{
 \t\t\t\t\tif (minimapAlert && clan != selectedPlayer && !aiCheckAlliances(selectedPlayer, clan))
-\t\t\t\t\t\tradarOverlayBuffer[pos] = WZCOL_YELLOW.rgba();
+\t\t\t\t\t\tpaintAlertMarker(x, y);
 \t\t\t\t\telse if (psStruct->player == selectedPlayer && psStruct->selected && !blinkState)
 \t\t\t\t\t\tradarOverlayBuffer[pos] = applyAlpha(playerCol, OVERLAY_OPACITY).rgba();
 \t\t\t\t\telse
