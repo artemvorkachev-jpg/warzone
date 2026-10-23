@@ -97,6 +97,7 @@ jobs:
             find /tmp/warzone-web -maxdepth 3 -type f | head -80
             exit 1
           fi
+          mkdir -p site/game
           cp -a "$(dirname "$game_index")"/. site/game/
           test -s site/game/index.html
           python3 - <<'PY'
