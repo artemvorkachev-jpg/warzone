@@ -2,7 +2,7 @@
 """Apply the minimap alert change to the pinned Warzone 2100 4.7.0 source."""
 from pathlib import Path
 
-p = Path("src/radar.cpp")
+p = Path("src/src/radar.cpp")
 s = p.read_text(encoding="utf-8")
 if "MINIMAP_ENEMY_ALERTS_PATCH" in s:
     print("Minimap alert patch already applied.")
