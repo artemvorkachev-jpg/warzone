@@ -1,0 +1,67 @@
+# Warzone 2100 4.7.0 source patch — minimap alert highlighting
+# Apply from the upstream Warzone2100/warzone2100 checkout at tag 4.7.0:
+#   git apply patches/minimap-enemy-alerts.patch
+#
+# Highlights hostile droids and structures in steady yellow when either:
+# - fewer than five minutes remain in a timed mission, OR
+# - fewer than ten hostile droids/structures remain.
+#
+# Artifact support and WebAssembly build integration are tracked separately;
+# this patch intentionally does not pretend those pieces are already complete.
+diff --git a/src/radar.cpp b/src/radar.cpp
+--- a/src/radar.cpp
++++ b/src/radar.cpp
+@@
+ #include "objects.h"
++#include "feature.h"
+@@
+ static void DrawRadarObjects()
+ {
+ 	UBYTE				clan;
+ 	PIELIGHT			playerCol;
+ 	PIELIGHT			flashCol;
+ 	memset(radarOverlayBuffer, 0, radarBufferSize);
+ 	bool blinkState = (gameTime - lastBlink) / BLINK_HALF_INTERVAL;
++	// End-of-mission alert: keep hostile map contacts yellow, without blinking.
++	// The object threshold is based on enemy droids and structures still alive.
++	int hostileObjectsRemaining = 0;
++	for (UBYTE player = 0; player < MAX_PLAYERS; ++player)
++	{
++		if (player == selectedPlayer || aiCheckAlliances(selectedPlayer, player))
++		{
++			continue;
++		}
++		hostileObjectsRemaining += static_cast<int>(apsDroidLists[player].size());
++		hostileObjectsRemaining += static_cast<int>(apsStructLists[player].size());
++	}
++	const bool lowMissionTime = mission.time >= 0
++		&& gameTime >= mission.startTime
++		&& mission.time - static_cast<SDWORD>(gameTime - mission.startTime) < 5 * GAME_TICKS_PER_SEC * 60;
++	const bool minimapAlert = lowMissionTime || hostileObjectsRemaining < 10;
+@@
+ 		for (const DROID* psDroid : apsDroidLists[clan])
+ 		{
+@@
+ 				if (clan == selectedPlayer && gameTime > HIT_NOTIFICATION && gameTime - psDroid->timeLastHit < HIT_NOTIFICATION)
+@@
+ 				else
+ 				{
+-					if (psDroid->selected && !blinkState)
++					if (minimapAlert && clan != selectedPlayer
++					    && !aiCheckAlliances(selectedPlayer, clan))
++					{
++						radarOverlayBuffer[pos] = WZCOL_YELLOW.rgba();
++					}
++					else if (psDroid->selected && !blinkState)
+ 						radarOverlayBuffer[pos] = applyAlpha(playerCol, OVERLAY_OPACITY).rgba();
+@@
+ 				else
+ 				{
+-					if (psStruct->player == selectedPlayer && psStruct->selected && !blinkState)
++					if (minimapAlert && clan != selectedPlayer
++					    && !aiCheckAlliances(selectedPlayer, clan))
++					{
++						radarOverlayBuffer[pos] = WZCOL_YELLOW.rgba();
++					}
++					else if (psStruct->player == selectedPlayer && psStruct->selected && !blinkState)
+ 						radarOverlayBuffer[pos] = applyAlpha(playerCol, OVERLAY_OPACITY).rgba();
