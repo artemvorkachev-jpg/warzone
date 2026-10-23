@@ -70,5 +70,29 @@ if needle not in s:
     raise SystemExit("Unsupported radar.cpp: structure color anchor not found")
 s = s.replace(needle, replacement, 1)
 
+# When the alert is active, show enemy markers even if they are outside local vision.
+# This is what makes markers appear rather than merely recoloring already-visible objects.
+needle = """\t\t\tif (psDroid->visibleForLocalDisplay()
+\t\t\t    || (bMultiPlayer && alliancesSharedVision(game.alliance)
+\t\t\t\t\t&& selectedPlayer < MAX_PLAYERS && aiCheckAlliances(selectedPlayer, psDroid->player)))"""
+replacement = """\t\t\tif (psDroid->visibleForLocalDisplay()
+\t\t\t    || (minimapAlert && clan != selectedPlayer && !aiCheckAlliances(selectedPlayer, clan))
+\t\t\t    || (bMultiPlayer && alliancesSharedVision(game.alliance)
+\t\t\t\t\t&& selectedPlayer < MAX_PLAYERS && aiCheckAlliances(selectedPlayer, psDroid->player)))"""
+if needle not in s:
+    raise SystemExit("Unsupported radar.cpp: droid visibility anchor not found")
+s = s.replace(needle, replacement, 1)
+
+needle = """\t\t\tif (psStruct->visibleForLocalDisplay()
+\t\t\t    || (bMultiPlayer && alliancesSharedVision(game.alliance)
+\t\t\t        && selectedPlayer < MAX_PLAYERS && aiCheckAlliances(selectedPlayer, psStruct->player)))"""
+replacement = """\t\t\tif (psStruct->visibleForLocalDisplay()
+\t\t\t    || (minimapAlert && clan != selectedPlayer && !aiCheckAlliances(selectedPlayer, clan))
+\t\t\t    || (bMultiPlayer && alliancesSharedVision(game.alliance)
+\t\t\t        && selectedPlayer < MAX_PLAYERS && aiCheckAlliances(selectedPlayer, psStruct->player)))"""
+if needle not in s:
+    raise SystemExit("Unsupported radar.cpp: structure visibility anchor not found")
+s = s.replace(needle, replacement, 1)
+
 p.write_text(s, encoding="utf-8")
 print("Applied verified enemy droid/structure minimap alert patch; artifacts are not highlighted.")
