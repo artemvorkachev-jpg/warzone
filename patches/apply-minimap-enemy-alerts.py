@@ -11,7 +11,7 @@ if "MINIMAP_ENEMY_ALERTS_PATCH" in s:
 needle = '#include "objects.h"\n'
 if needle not in s:
     raise SystemExit("Unsupported radar.cpp: objects.h include anchor not found")
-s = s.replace(needle, needle + '#include "feature.h"\n', 1)
+s = s.replace(needle, needle, 1)
 
 needle = """\tbool blinkState = (gameTime - lastBlink) / BLINK_HALF_INTERVAL;
 
@@ -86,35 +86,6 @@ if needle not in s:
     raise SystemExit("Unsupported radar.cpp: structure color anchor not found")
 s = s.replace(needle, replacement, 1)
 
-# Draw artifact locations as yellow dots while the alert is active.
-needle = """\tif (gameTime - lastBlink >= BLINK_INTERVAL)
-\t\tlastBlink = gameTime;
-}"""
-replacement = """\tif (minimapAlert)
-\t{
-\t\tfor (const FEATURE* feature : GlobalFeatureContainer())
-\t\t{
-\t\t\tif (!feature || !feature->psStats || feature->psStats->subType != FEAT_GEN_ARTE)
-\t\t\t{
-\t\t\t\tcontinue;
-\t\t\t}
-\t\t\tif (feature->pos.x < world_coord(scrollMinX) || feature->pos.y < world_coord(scrollMinY)
-\t\t\t    || feature->pos.x >= world_coord(scrollMaxX) || feature->pos.y >= world_coord(scrollMaxY))
-\t\t\t{
-\t\t\t\tcontinue;
-\t\t\t}
-\t\t\tconst int x = feature->pos.x / TILE_UNITS;
-\t\t\tconst int y = feature->pos.y / TILE_UNITS;
-\t\t\tconst size_t pos = (x - scrollMinX) + (y - scrollMinY) * radarTexWidth;
-\t\t\tASSERT(pos * sizeof(*radarOverlayBuffer) < radarBufferSize, "Buffer overrun");
-\t\t\tradarOverlayBuffer[pos] = WZCOL_YELLOW.rgba();
-\t\t}
-\t}
-\tif (gameTime - lastBlink >= BLINK_INTERVAL)
-\t\tlastBlink = gameTime;
-}"""
-if needle not in s:
-    raise SystemExit("Unsupported radar.cpp: end-of-function anchor not found")
 s = s.replace(needle, replacement, 1)
 p.write_text(s, encoding="utf-8")
 print("Applied minimap enemy alert patch to src/radar.cpp")
