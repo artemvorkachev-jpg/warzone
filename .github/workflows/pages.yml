@@ -29,21 +29,78 @@ jobs:
         with:
           enablement: true
 
-      - name: Download official Warzone 2100 Web Edition
+      - name: Checkout pinned Warzone source
+        uses: actions/checkout@v4
+        with:
+          repository: Warzone2100/warzone2100
+          ref: 4.7.0
+          path: src
+          submodules: recursive
+
+      - name: Apply minimap alert source change
         run: |
           set -euo pipefail
-          curl --fail --location --retry 3 \
-            "https://github.com/Warzone2100/warzone2100/releases/download/4.7.0/warzone2100_web_wasm32_archive.zip" \
-            --output /tmp/warzone-web.zip
-          mkdir -p /tmp/warzone-web site/game
-          unzip -q /tmp/warzone-web.zip -d /tmp/warzone-web
+          python3 patches/apply-minimap-enemy-alerts.py
+        working-directory: src
+        env:
+          PYTHONUNBUFFERED: "1"
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y cmake git zip unzip gettext asciidoctor autoconf autoconf-archive automake libtool
+
+      - uses: actions/setup-node@v4
+        with:
+          package-manager-cache: false
+
+      - name: Install EMSDK
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git
+          cd emsdk
+          ./emsdk install 4.0.10
+          ./emsdk activate 4.0.10
+          echo "CI_EMSDK_ENV_SCRIPT_PATH=$(pwd)/emsdk_env.sh" >> "$GITHUB_ENV"
+
+      - name: Configure custom WebAssembly build
+        working-directory: src
+        run: |
+          set -euo pipefail
+          mkdir -p ../build ../installed
+          git clone https://github.com/microsoft/vcpkg.git ../build/vcpkg
+          source "$CI_EMSDK_ENV_SCRIPT_PATH"
+          cmake -S . -B ../build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DWZ_ENABLE_WARNINGS:BOOL=ON \
+            -DWZ_DISTRIBUTOR:STRING="custom-minimap-alerts" \
+            "-DCMAKE_TOOLCHAIN_FILE=../build/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+            "-DVCPKG_TARGET_TRIPLET=wasm32-emscripten" \
+            "-DCMAKE_INSTALL_PREFIX:PATH=$GITHUB_WORKSPACE/installed"
+
+      - name: Build custom WebAssembly game
+        working-directory: src
+        run: |
+          set -euo pipefail
+          source "$CI_EMSDK_ENV_SCRIPT_PATH"
+          cmake --build ../build --config Release --target install --parallel 4
+          cd ../build
+          cpack --config ./CPackConfig.cmake -G ZIP \
+            -D CPACK_PACKAGE_FILE_NAME="warzone2100_archive" \
+            -D CPACK_INCLUDE_TOPLEVEL_DIRECTORY=OFF \
+            -D CPACK_ARCHIVE_COMPONENT_INSTALL=ON \
+            -D CPACK_COMPONENTS_GROUPING=ALL_COMPONENTS_IN_ONE
+          mkdir -p /tmp/warzone-web
+          unzip -q ./warzone2100_archive.zip -d /tmp/warzone-web
+      - name: Prepare game files
+        run: |
+          set -euo pipefail
           game_index="$(find /tmp/warzone-web -type f -name index.html -print -quit)"
           if [ -z "$game_index" ]; then
-            echo "Could not find index.html in the official Web Edition archive"
+            echo "Custom WebAssembly archive has no index.html"
+            find /tmp/warzone-web -maxdepth 3 -type f | head -80
             exit 1
           fi
-          game_root="$(dirname "$game_index")"
-          cp -a "$game_root"/. site/game/
+          cp -a "$(dirname "$game_index")"/. site/game/
           test -s site/game/index.html
           python3 - <<'PY'
           from pathlib import Path
