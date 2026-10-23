@@ -1,31 +1,22 @@
 #!/usr/bin/env python3
-"""Apply the minimap alert change to the pinned Warzone 2100 4.7.0 source."""
+"""Patch enemy droid and structure minimap dots in the pinned Warzone 2100 source."""
 from pathlib import Path
 
 p = Path("src/src/radar.cpp")
 s = p.read_text(encoding="utf-8")
 if "MINIMAP_ENEMY_ALERTS_PATCH" in s:
-    print("Minimap alert patch already applied.")
-    raise SystemExit(0)
-
-needle = '#include "objects.h"\n'
-if needle not in s:
-    raise SystemExit("Unsupported radar.cpp: objects.h include anchor not found")
-s = s.replace(needle, needle, 1)
+    raise SystemExit("Alert patch marker already exists; refusing to silently skip patch verification")
 
 needle = """\tbool blinkState = (gameTime - lastBlink) / BLINK_HALF_INTERVAL;
 
 \t/* Show droids on map - go through all players */"""
 replacement = """\tbool blinkState = (gameTime - lastBlink) / BLINK_HALF_INTERVAL;
 
-\t// MINIMAP_ENEMY_ALERTS_PATCH: steady yellow contacts near mission end.
+\t// MINIMAP_ENEMY_ALERTS_PATCH: highlight enemy droids and structures only.
 \tint hostileObjectsRemaining = 0;
 \tfor (UBYTE player = 0; player < MAX_PLAYERS; ++player)
 \t{
-\t\tif (player == selectedPlayer || aiCheckAlliances(selectedPlayer, player))
-\t\t{
-\t\t\tcontinue;
-\t\t}
+\t\tif (player == selectedPlayer || aiCheckAlliances(selectedPlayer, player)) continue;
 \t\tfor (const DROID* droid : apsDroidLists[player]) { (void)droid; ++hostileObjectsRemaining; }
 \t\tfor (const STRUCTURE* structure : apsStructLists[player]) { (void)structure; ++hostileObjectsRemaining; }
 \t}
@@ -36,7 +27,7 @@ replacement = """\tbool blinkState = (gameTime - lastBlink) / BLINK_HALF_INTERVA
 
 \t/* Show droids on map - go through all players */"""
 if needle not in s:
-    raise SystemExit("Unsupported radar.cpp: DrawRadarObjects start anchor not found")
+    raise SystemExit("Unsupported radar.cpp: DrawRadarObjects anchor not found")
 s = s.replace(needle, replacement, 1)
 
 needle = """\t\t\t\telse
@@ -80,4 +71,4 @@ if needle not in s:
 s = s.replace(needle, replacement, 1)
 
 p.write_text(s, encoding="utf-8")
-print("Applied minimap enemy alert patch to src/radar.cpp")
+print("Applied verified enemy droid/structure minimap alert patch; artifacts are not highlighted.")
